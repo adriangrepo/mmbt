@@ -31,6 +31,8 @@ def get_args(parser):
     parser.add_argument("--batch_sz", type=int, default=4)
     parser.add_argument("--bert_model", type=str, default="bert-base-uncased", choices=["bert-base-uncased", "bert-large-uncased"])
     parser.add_argument("--data_path", type=str, default=BASE_PATH)
+    parser.add_argument("--dataset_image_name", type=str, default="image", \
+                        help="some versions of mmimdb seem to have 'img' as name in jsonl others have 'image'")
     parser.add_argument("--drop_img_percent", type=float, default=0.0)
     parser.add_argument("--dropout", type=float, default=0.1)
     parser.add_argument("--embed_sz", type=int, default=300)
