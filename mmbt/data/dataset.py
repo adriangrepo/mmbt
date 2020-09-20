@@ -31,7 +31,7 @@ class JsonlDataset(Dataset):
         with numpy_seed(0):
             for row in self.data:
                 if np.random.random() < args.drop_img_percent:
-                    row["img"] = None
+                    row["image"] = None
 
         self.max_seq_len = args.max_seq_len
         if args.model == "mmbt":
@@ -79,9 +79,9 @@ class JsonlDataset(Dataset):
 
         image = None
         if self.args.model in ["img", "concatbow", "concatbert", "mmbt"]:
-            if self.data[index]["img"]:
+            if self.data[index]["image"]:
                 image = Image.open(
-                    os.path.join(self.data_dir, self.data[index]["img"])
+                    os.path.join(self.data_dir, self.data[index]["image"])
                 ).convert("RGB")
             else:
                 image = Image.fromarray(128 * np.ones((256, 256, 3), dtype=np.uint8))
