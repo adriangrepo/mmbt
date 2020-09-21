@@ -9,6 +9,7 @@
 
 
 import argparse
+import time
 from sklearn.metrics import f1_score, accuracy_score
 from tqdm import tqdm
 
@@ -28,7 +29,7 @@ OUTPUT_PATH=BASE_PATH+'/mmbt/'
 RUN_ID="02_20200920"
 
 def get_args(parser):
-    parser.add_argument("--batch_sz", type=int, default=4)
+    parser.add_argument("--batch_sz", type=int, default=2)
     parser.add_argument("--bert_model", type=str, default="bert-base-uncased", choices=["bert-base-uncased", "bert-large-uncased"])
     parser.add_argument("--data_path", type=str, default=BASE_PATH)
     parser.add_argument("--dataset_image_name", type=str, default="image", \
@@ -48,7 +49,7 @@ def get_args(parser):
     parser.add_argument("--lr", type=float, default=1e-4)
     parser.add_argument("--lr_factor", type=float, default=0.5)
     parser.add_argument("--lr_patience", type=int, default=2)
-    parser.add_argument("--max_epochs", type=int, default=1)
+    parser.add_argument("--max_epochs", type=int, default=3)
     parser.add_argument("--max_seq_len", type=int, default=512)
     parser.add_argument("--model", type=str, default="mmbt", choices=["bow", "img", "bert", "concatbow", "concatbert", "mmbt"])
     parser.add_argument("--n_workers", type=int, default=12)
@@ -212,11 +213,14 @@ def train(args):
 
     logger.info("Training..")
     for i_epoch in range(start_epoch, args.max_epochs):
+        start = time.time()
+        batch_times=[]
         train_losses = []
         model.train()
         optimizer.zero_grad()
 
         for batch in tqdm(train_loader, total=len(train_loader)):
+            batch_start = time.time()
             loss, _, _ = model_forward(i_epoch, model, args, criterion, batch)
             if args.gradient_accumulation_steps > 1:
                 loss = loss / args.gradient_accumulation_steps
@@ -227,9 +231,11 @@ def train(args):
             if global_step % args.gradient_accumulation_steps == 0:
                 optimizer.step()
                 optimizer.zero_grad()
+            batch_times.append(time.time()-batch_start)
 
         model.eval()
         metrics = model_eval(i_epoch, val_loader, model, args, criterion)
+        logger.info(f"Epoch {i_epoch}, Train time: {time.time()-start}, batches: {len(batch_times)}, average time per batch: {sum(batch_times)/len(batch_times) }")
         logger.info("Train Loss: {:.4f}".format(np.mean(train_losses)))
         log_metrics("Val", metrics, args, logger)
 
